@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ensiklopedia Indonesia Interaktif</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        /* CSS (Tampilan) */
+        body { margin: 0; font-family: sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Area Peta (Kiri - 70%) */
+        #map { width: 70%; height: 100%; background: #aad3df; }
+        
+        /* Area Info (Kanan - 30%) */
+        #info-box { 
+            width: 30%; 
+            padding: 20px; 
+            background: #f9f9f9; 
+            overflow-y: auto; 
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .judul { color: #006400; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        .hint { color: #666; font-style: italic; margin-top: 50%; text-align: center; }
+        
+        /* Tampilan di HP (Atas Bawah) */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            #map { width: 100%; height: 60%; }
+            #info-box { width: 100%; height: 40%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div id="info-box">
+        <div id="content">
+            <h2 class="judul">Selamat Datang! 🇮🇩</h2>
+            <p class="hint">Klik salah satu provinsi di peta untuk melihat informasinya.</p>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ENSIKLOPEDIA (Edit di sini sesuka hati) ---
+        const dataProvinsi = {
+            "Aceh": { ibukota: "Banda Aceh", makanan: "Mie Aceh", fakta: "Dikenal sebagai Serambi Mekkah." },
+            "DKI Jakarta": { ibukota: "Jakarta", makanan: "Kerak Telor", fakta: "Ibukota negara dan pusat bisnis." },
+            "Jawa Barat": { ibukota: "Bandung", makanan: "Seblak, Karedok", fakta: "Provinsi dengan penduduk terbanyak." },
+            "Bali": { ibukota: "Denpasar", makanan: "Ayam Betutu", fakta: "Pulau Dewata yang mendunia." },
+            "Papua": { ibukota: "Jayapura", makanan: "Papeda", fakta: "Kaya akan alam dan tambang emas." }
+            // Tambahkan provinsi lain di sini...
+        };
+
+        // --- LOGIKA PETA ---
+        
+        // 1. Bikin Peta Dasar
+        var map = L.map('map').setView([-2.5489, 118.0149], 5); // Tengah Indonesia
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 2. Fungsi saat wilayah diklik
+        function onFeatureClick(e) {
+            var layer = e.target;
+            var namaProvinsi = layer.feature.properties.state; // Ambil nama dari GeoJSON
+            
+            // Ambil data dari database kita di atas
+            var info = dataProvinsi[namaProvinsi];
+            var htmlContent = "";
+
+            if (info) {
+                htmlContent = `
+                    <h2 class="judul">${namaProvinsi}</h2>
+                    <p><strong>🏛️ Ibukota:</strong> ${info.ibukota}</p>
+                    <p><strong>🍲 Makanan:</strong> ${info.makanan}</p>
+                    <p><strong>💡 Fakta Unik:</strong><br>${info.fakta}</p>
+                `;
+            } else {
+                htmlContent = `
+                    <h2 class="judul">${namaProvinsi}</h2>
+                    <p>Data belum tersedia untuk provinsi ini.</p>
+                `;
+            }
+
+            // Tampilkan di kotak kanan
+            document.getElementById('content').innerHTML = htmlContent;
+
+            // Highlight wilayah yang dipilih
+            geojsonLayer.eachLayer(function(l) { l.setStyle({fillColor: '#3388ff'}); }); // Reset warna
+            layer.setStyle({fillColor: 'orange', fillOpacity: 0.7}); // Warna aktif
+        }
+
+        // 3. Fungsi Load GeoJSON
+        var geojsonLayer;
+        
+        fetch('indonesia.geojson')
+            .then(response => response.json())
+            .then(data => {
+                geojsonLayer = L.geoJSON(data, {
+                    style: { color: "white", weight: 1, fillColor: "#3388ff", fillOpacity: 0.5 },
+                    onEachFeature: function (feature, layer) {
+                        layer.on('click', onFeatureClick);
+                    }
+                }).addTo(map);
+            })
+            .catch(error => console.log("Gagal memuat peta. Pastikan file indonesia.geojson sudah diupload!", error));
+
+    </script>
+</body>
+</html>
