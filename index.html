@@ -100,7 +100,7 @@
         // 3. Fungsi Load GeoJSON
         var geojsonLayer;
         
-        fetch('indonesia.geojson')
+        fetch('indonesia.geojson.json')
             .then(response => response.json())
             .then(data => {
                 geojsonLayer = L.geoJSON(data, {
