@@ -69,10 +69,22 @@
         // 2. Fungsi saat wilayah diklik
         function onFeatureClick(e) {
             var layer = e.target;
-            var namaProvinsi = layer.feature.properties.state; // Ambil nama dari GeoJSON
+           // --- KODE BARU (Supaya tidak undefined) ---
+            var props = layer.feature.properties;
+            // Coba cari nama di berbagai kemungkinan kunci
+            var namaProvinsi = props.state || props.Propinsi || props.NAME_1 || props.name || "Nama Tidak Ditemukan";
+            
+            // Ubah jadi huruf besar semua biar pencarian lebih gampang
+            var namaKunci = namaProvinsi.toUpperCase();
             
             // Ambil data dari database kita di atas
-            var info = dataProvinsi[namaProvinsi];
+            var info = null;
+            for (var key in dataProvinsi) {
+                if (key.toUpperCase() === namaKunci) {
+                    info = dataProvinsi[key];
+                    break;
+                }
+            }
             var htmlContent = "";
 
             if (info) {
